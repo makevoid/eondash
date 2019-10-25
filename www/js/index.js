@@ -104,22 +104,41 @@ const request = (url, options) => (
   })
 )
 
+const getDongles = async () => {
+  const options = { method: 'get' }
+  const url = "https://api.commadotai.com/v1/me/devices"
+  const data = await request(url, options)
+  console.log("getDongles", data)
+  return data
+}
+
+// get carState etc. from Athena
+const getData = async (dongleId) => {
+  const service = "carState"
+  const params = {
+    method: "getMessage",
+    params: {"service": service, "timeout": 3000},
+    jsonrpc: "2.0",
+    id: 0
+  }
+  const options = { method: 'post', data: params }
+  const url = `https://athena.comma.ai/${dongleId}`
+  const data = await request(url, options)
+  console.log("getData", data)
+  return data
+}
+
 const testRequest = async () => {
   cordova.plugin.http.setHeader('Authorization', `JWT ${JWT_TOKEN}`)
 
   const log = document.querySelector(".debug")
   log.innerHTML = "init"
 
-  const options = {
-    method: 'get',
-    // data: { id: 12, message: 'test' },
-    // headers: { Authorization: `JWT ${JWT_TOKEN}` }
-  };
+  const dongles  = await getDongles()
+  const dongleId = dongles[0].dongle_id
 
-  const url = "https://api.commadotai.com/v1/me/devices"
+  const data = await getData(dongleId)
 
-  const data = await request(url, options)
-  console.log("data", data)
   log.innerHTML = data
 }
 
