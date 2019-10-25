@@ -11,7 +11,6 @@
       while (i < count) {
           let x = baseval
           let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
-
           data.push({
             x, y
           })
@@ -21,10 +20,6 @@
       }
   }
 
-  getDayWiseTimeSeries(new Date('11 Feb 2017 GMT').getTime(), 10, {
-      min: 10,
-      max: 90,
-  })
 
   const getNewSeries = (baseval, yrange) => {
       const newDate = baseval + TICKINTERVAL
@@ -38,11 +33,10 @@
           data[i].y = 0
       }
 
-      data.push({
-          x: newDate,
-          y: Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min,
-      })
-
+      return {
+        x: newDate,
+        y: Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min,
+      }
   }
 
   const resetData = _ => {
@@ -80,9 +74,6 @@
     stroke: {
       curve: 'smooth',
     },
-    series: [{
-      data: data,
-    }],
     title: {
       text: 'Dynamic Updating Chart',
       align: 'left',
@@ -102,46 +93,87 @@
     },
   }
 
-  const chart = new ApexCharts(
-      document.querySelector("#chart"),
-      options
-  )
 
-  chart.render()
-
-  const updateChart = () => {
-    getNewSeries(lastDate, {
-      min: 10,
-      max: 90,
-    })
-    chart.updateSeries([{
-      data: data,
-    }])
-  }
-
-  window.setInterval(() => updateChart, 1000)
 
 
 
 var app = {
-    initialize: function() {
-        document.addEventListener('deviceready', this.onDeviceReady.bind(this), false)
-    },
+  initialize: function() {
+    document.addEventListener('deviceready', this.onDeviceReady.bind(this), false)
+  },
 
-    onDeviceReady: function() {
-        this.receivedEvent('deviceready')
-    },
+  onDeviceReady: function() {
+    this.receivedEvent('deviceready')
+  },
 
-    receivedEvent: function(id) {
-        var parentElement     = document.getElementById(id)
-        var listeningElement  = parentElement.querySelector('.listening')
-        var receivedElement   = parentElement.querySelector('.received')
+  receivedEvent: function(id) {
+    const parentElement     = document.getElementById(id)
+    const listeningElement  = parentElement.querySelector('.listening')
+    const receivedElement   = parentElement.querySelector('.received')
 
-        listeningElement.setAttribute('style', 'display:none')
-        receivedElement.setAttribute('style', 'display:block')
+    listeningElement.setAttribute('style', 'display:none')
+    receivedElement.setAttribute('style', 'display:block')
 
-        console.log(`Received Event: ${id}`)
+    console.log(`Received Event: ${id}`)
+
+    // -------
+
+    getDayWiseTimeSeries(new Date('11 Feb 2017 GMT').getTime(), 10, {
+      min: 10,
+      max: 90,
+    })
+
+    const clone = (obj) => Object.assign({}, obj)
+    const cloneArr = (arr) => new Array(...arr)
+
+
+    const options1  = clone(options)
+    const options2  = clone(options)
+    const data1     = cloneArr(data)
+    const data2     = cloneArr(data)
+
+    options1.series = [{
+      data: data,
+    }]
+    options2.series = [{
+      data: data,
+    }]
+
+    const chart1 = new ApexCharts(
+      document.querySelector("#chart1"),
+      options1
+    )
+    chart1.render()
+
+    const chart2 = new ApexCharts(
+      document.querySelector("#chart2"),
+      options2
+    )
+    chart2.render()
+
+
+
+    const updateCharts = () => {
+      const newSeries1 = getNewSeries(lastDate, {
+        min: 10,
+        max: 90,
+      })
+      const newSeries2 = getNewSeries(lastDate, {
+        min: 10,
+        max: 90,
+      })
+      data1.push(newSeries1)
+      data2.push(newSeries2)
+      chart1.updateSeries([{
+        data: data1,
+      }])
+      chart2.updateSeries([{
+        data: data2,
+      }])
     }
+
+    setInterval(updateCharts, 1000)
+  }
 }
 
 app.initialize()
