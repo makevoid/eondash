@@ -25,16 +25,16 @@ body {
 /* Portrait layout (default) */
 .app {
     text-align:center;
-    padding:180px 0px 0px 0px;
-    margin: 115px 0px 0px 112px;
+    padding: 20px 1%;
+    margin:  20px 1%;
 }
 
 /* Landscape layout (with min-width) */
 @media screen and (min-aspect-ratio: 1/1) and (min-width:400px) {
     .app {
         background-position:left center;
-        padding: 50px 1%;
-        margin:  50px 1%;
+        padding: 20px 0;
+        margin:  20px 2%;
     }
 }
 

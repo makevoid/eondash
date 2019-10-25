@@ -2,6 +2,7 @@
 
 const JWT_TOKEN = window.JWT_TOKEN
 
+
 const TICKINTERVAL = 86400000
 const XAXISRANGE   = 777600000
 
@@ -21,7 +22,6 @@ const getDayWiseTimeSeries = (baseval, count, yrange) => {
     i++
   }
 }
-
 
 const getNewSeries = (baseval, yrange) => {
   const newDate = baseval + TICKINTERVAL
@@ -91,6 +91,28 @@ const options = {
   },
 }
 
+const testRequest = () => {
+  cordova.plugin.http.setHeader('Authorization', `JWT ${JWT_TOKEN}`)
+  
+
+  const options = {
+    method: 'post',
+    data: { id: 12, message: 'test' },
+    // headers: { Authorization: `JWT ${JWT_TOKEN}` }
+  };
+
+  cordova.plugin.http.sendRequest('https://google.com/', options, function(response) {
+    // prints 200
+    console.log(response.status);
+  }, function(response) {
+    // prints 403
+    console.log(response.status);
+
+    //prints Permission denied
+    console.log(response.error);
+  });
+}
+
 // default cordova setup
 const app = {
   initialize: function() {
@@ -120,7 +142,6 @@ const app = {
 
     const clone = (obj) => Object.assign({}, obj)
     const cloneArr = (arr) => new Array(...arr)
-
 
     const options1  = clone(options)
     const options2  = clone(options)
@@ -157,8 +178,6 @@ const app = {
     )
     chart3.render()
 
-
-
     const updateCharts = () => {
       const newSeries1 = getNewSeries(lastDate, {
         min: 10,
@@ -193,37 +212,9 @@ const app = {
     }
 
     setInterval(updateCharts, 1000)
+
+    testRequest()
   }
 }
 
 app.initialize()
-
-//
-// class App {
-//   constructor() {
-//     this.main = this
-//
-//   }
-//
-//   init() {
-//     document.addEventListener('deviceready', this.onDeviceReady.bind(this.main), false)
-//   }
-//
-//   onDeviceReady() {
-//     this.receivedEvent('deviceready')
-//   }
-//
-//   receivedEvent(id) {
-//     const parentElement = document.querySelector(`#${elemId}`)
-//     const listenElement = parentElement.querySelector('.listening')
-//     const reicvdElement = parentElement.querySelector('.received')
-//     listenElement.setAttribute('style', 'display:none' )
-//     reicvdElement.setAttribute('style', 'display:block')
-//
-//     console.log(`Received Event: ${id}`)
-//   }
-// }
-//
-// const app = new App()
-//
-// app.init()
