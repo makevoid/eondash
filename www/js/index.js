@@ -91,26 +91,36 @@ const options = {
   },
 }
 
-const testRequest = () => {
+const request = (url, options) => (
+  new Promise((resolve, reject) => {
+    cordova.plugin.http.sendRequest(url, options, (resp) => {
+      // console.log(resp.data)
+      resolve(resp.data)
+    }, (resp) => {
+      console.log("ERROR:", resp.status)
+      console.log(resp.error)
+      reject(resp.error)
+    });
+  })
+)
+
+const testRequest = async () => {
   cordova.plugin.http.setHeader('Authorization', `JWT ${JWT_TOKEN}`)
-  
+
+  const log = document.querySelector(".debug")
+  log.innerHTML = "init"
 
   const options = {
-    method: 'post',
-    data: { id: 12, message: 'test' },
+    method: 'get',
+    // data: { id: 12, message: 'test' },
     // headers: { Authorization: `JWT ${JWT_TOKEN}` }
   };
 
-  cordova.plugin.http.sendRequest('https://google.com/', options, function(response) {
-    // prints 200
-    console.log(response.status);
-  }, function(response) {
-    // prints 403
-    console.log(response.status);
+  const url = "https://api.commadotai.com/v1/me/devices"
 
-    //prints Permission denied
-    console.log(response.error);
-  });
+  const data = await request(url, options)
+  console.log("data", data)
+  log.innerHTML = data
 }
 
 // default cordova setup
@@ -123,7 +133,7 @@ const app = {
     this.receivedEvent('deviceready')
   },
 
-  receivedEvent: function(id) {
+  receivedEvent: async function(id) {
     const parentElement     = document.getElementById(id)
     const listeningElement  = parentElement.querySelector('.listening')
     const receivedElement   = parentElement.querySelector('.received')
@@ -213,7 +223,7 @@ const app = {
 
     setInterval(updateCharts, 1000)
 
-    testRequest()
+    await testRequest()
   }
 }
 
