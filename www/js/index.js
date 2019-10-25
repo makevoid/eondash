@@ -1,103 +1,98 @@
 "use strict"
 
-  const TICKINTERVAL = 86400000
-  const XAXISRANGE = 777600000
+const JWT_TOKEN = window.JWT_TOKEN
 
-  let lastDate = 0
-  let data = []
+const TICKINTERVAL = 86400000
+const XAXISRANGE   = 777600000
 
-  const getDayWiseTimeSeries = (baseval, count, yrange) => {
-      let i = 0
-      while (i < count) {
-          let x = baseval
-          let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
-          data.push({
-            x, y
-          })
-          lastDate = baseval
-          baseval += TICKINTERVAL
-          i++
-      }
+let lastDate = 0
+let data = []
+
+const getDayWiseTimeSeries = (baseval, count, yrange) => {
+  let i = 0
+  while (i < count) {
+    let x = baseval
+    let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
+    data.push({
+      x, y
+    })
+    lastDate = baseval
+    baseval += TICKINTERVAL
+    i++
+  }
+}
+
+
+const getNewSeries = (baseval, yrange) => {
+  const newDate = baseval + TICKINTERVAL
+  lastDate = newDate
+
+  for(let i = 0; i< data.length - 10; i++) {
+    // we reset the x and y of the data which is out of drawing area to prevent memory leaks
+    data[i].x = newDate - XAXISRANGE - TICKINTERVAL
+    data[i].y = 0
   }
 
-
-  const getNewSeries = (baseval, yrange) => {
-      const newDate = baseval + TICKINTERVAL
-      lastDate = newDate
-
-      for(let i = 0; i< data.length - 10; i++) {
-          // IMPORTANT
-          // we reset the x and y of the data which is out of drawing area
-          // to prevent memory leaks
-          data[i].x = newDate - XAXISRANGE - TICKINTERVAL
-          data[i].y = 0
-      }
-
-      return {
-        x: newDate,
-        y: Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min,
-      }
+  return {
+    x: newDate,
+    y: Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min,
   }
+}
 
-  const resetData = _ => {
-      // Alternatively, you can also reset the data at certain intervals to prevent creating a huge series
-      const len = data.length
-      data = data.slice( len-30, len )
+const resetData = _ => {
+  const len = data.length
+  data = data.slice( len-30, len )
+}
+
+const animOptions = {
+  enabled: true,
+  easing: 'linear',
+  dynamicAnimation: {
+    speed: 1000
   }
+}
 
-  const animOptions = {
-    enabled: true,
-    easing: 'linear',
-    dynamicAnimation: {
-      speed: 1000
-    }
+const chartOptions = {
+  height: 350,
+  type: 'line',
+  animations: animOptions,
+  toolbar: {
+    show: false
+  },
+  zoom: {
+    enabled: false
   }
+}
 
-  const chartOptions = {
-    height: 350,
-    type: 'line',
-    animations: animOptions,
-    toolbar: {
-      show: false
-    },
-    zoom: {
-      enabled: false
-    }
-  }
+const options = {
+  chart: chartOptions,
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    curve: 'smooth',
+  },
+  title: {
+    text: 'Dynamic Updating Chart',
+    align: 'left',
+  },
+  markers: {
+    size: 0,
+  },
+  xaxis: {
+    type: 'datetime',
+    range: XAXISRANGE,
+  },
+  yaxis: {
+    max: 100,
+  },
+  legend: {
+    show: false,
+  },
+}
 
-
-  const options = {
-    chart: chartOptions,
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      curve: 'smooth',
-    },
-    title: {
-      text: 'Dynamic Updating Chart',
-      align: 'left',
-    },
-    markers: {
-      size: 0,
-    },
-    xaxis: {
-      type: 'datetime',
-      range: XAXISRANGE,
-    },
-    yaxis: {
-      max: 100,
-    },
-    legend: {
-      show: false,
-    },
-  }
-
-
-
-
-
-var app = {
+// default cordova setup
+const app = {
   initialize: function() {
     document.addEventListener('deviceready', this.onDeviceReady.bind(this), false)
   },

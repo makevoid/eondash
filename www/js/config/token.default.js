@@ -1,0 +1,1 @@
+window.JWT_TOKEN = "..."
