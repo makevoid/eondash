@@ -1,18 +1,19 @@
-// require other file
+"use strict"
 
-const renderChart = () => {
-  const lastDate = 0
-  const data = []
   const TICKINTERVAL = 86400000
-  let XAXISRANGE = 777600000
+  const XAXISRANGE = 777600000
+
+  let lastDate = 0
+  let data = []
+
   const getDayWiseTimeSeries = (baseval, count, yrange) => {
-      const i = 0
+      let i = 0
       while (i < count) {
-          const x = baseval
-          const y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
+          let x = baseval
+          let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
 
           data.push({
-              x, y
+            x, y
           })
           lastDate = baseval
           baseval += TICKINTERVAL
@@ -50,6 +51,13 @@ const renderChart = () => {
       data = data.slice( len-10, len )
   }
 
+  const animOptions = {
+    enabled: true,
+    easing: 'linear',
+    dynamicAnimation: {
+      speed: 1000
+    }
+  }
 
   const chartOptions = {
     height: 350,
@@ -63,13 +71,6 @@ const renderChart = () => {
     }
   }
 
-  const animOptions = {
-    enabled: true,
-    easing: 'linear',
-    dynamicAnimation: {
-      speed: 1000
-    }
-  }
 
   const options = {
     chart: chartOptions,
@@ -119,29 +120,58 @@ const renderChart = () => {
   }
 
   window.setInterval(() => updateChart, 1000)
+
+
+
+var app = {
+    initialize: function() {
+        document.addEventListener('deviceready', this.onDeviceReady.bind(this), false)
+    },
+
+    onDeviceReady: function() {
+        this.receivedEvent('deviceready')
+    },
+
+    receivedEvent: function(id) {
+        var parentElement     = document.getElementById(id)
+        var listeningElement  = parentElement.querySelector('.listening')
+        var receivedElement   = parentElement.querySelector('.received')
+
+        listeningElement.setAttribute('style', 'display:none')
+        receivedElement.setAttribute('style', 'display:block')
+
+        console.log(`Received Event: ${id}`)
+    }
 }
 
-class App {
-  constructor() {
+app.initialize()
 
-  }
-
-  init() {
-    document.addEventListener('deviceready', this.deviceReady.bind(this), false)
-
-  }
-
-  deviceReady(evt) {
-    const parentElement = document.querySelector(`#${elemId}`)
-    const listenElement = parentElement.querySelector('.listening')
-    const reicvdElement = parentElement.querySelector('.received')
-    listenElement.setAttribute('style', 'display:none' )
-    reicvdElement.setAttribute('style', 'display:block')
-
-    console.log(`Received Event: ${id}`)
-  }
-}
-
-const app = new App()
-
-app.init()
+//
+// class App {
+//   constructor() {
+//     this.main = this
+//
+//   }
+//
+//   init() {
+//     document.addEventListener('deviceready', this.onDeviceReady.bind(this.main), false)
+//   }
+//
+//   onDeviceReady() {
+//     this.receivedEvent('deviceready')
+//   }
+//
+//   receivedEvent(id) {
+//     const parentElement = document.querySelector(`#${elemId}`)
+//     const listenElement = parentElement.querySelector('.listening')
+//     const reicvdElement = parentElement.querySelector('.received')
+//     listenElement.setAttribute('style', 'display:none' )
+//     reicvdElement.setAttribute('style', 'display:block')
+//
+//     console.log(`Received Event: ${id}`)
+//   }
+// }
+//
+// const app = new App()
+//
+// app.init()
