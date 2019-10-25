@@ -42,7 +42,7 @@
   const resetData = _ => {
       // Alternatively, you can also reset the data at certain intervals to prevent creating a huge series
       const len = data.length
-      data = data.slice( len-10, len )
+      data = data.slice( len-30, len )
   }
 
   const animOptions = {
@@ -129,8 +129,10 @@ var app = {
 
     const options1  = clone(options)
     const options2  = clone(options)
+    const options3  = clone(options)
     const data1     = cloneArr(data)
     const data2     = cloneArr(data)
+    const data3     = cloneArr(data)
 
     options1.series = [{
       data: data,
@@ -138,18 +140,27 @@ var app = {
     options2.series = [{
       data: data,
     }]
+    options3.series = [{
+      data: data,
+    }]
 
     const chart1 = new ApexCharts(
-      document.querySelector("#chart1"),
+      document.querySelector(".chart1"),
       options1
     )
     chart1.render()
 
     const chart2 = new ApexCharts(
-      document.querySelector("#chart2"),
+      document.querySelector(".chart2"),
       options2
     )
     chart2.render()
+
+    const chart3 = new ApexCharts(
+      document.querySelector(".chart3"),
+      options3
+    )
+    chart3.render()
 
 
 
@@ -162,13 +173,27 @@ var app = {
         min: 10,
         max: 90,
       })
+      const newSeries3 = getNewSeries(lastDate, {
+        min: 10,
+        max: 90,
+      })
+
+      if (data1.length > 30) {
+        data1.unshift()
+        data2.unshift()
+        data3.unshift()
+      }
       data1.push(newSeries1)
       data2.push(newSeries2)
+      data3.push(newSeries3)
       chart1.updateSeries([{
         data: data1,
       }])
       chart2.updateSeries([{
         data: data2,
+      }])
+      chart3.updateSeries([{
+        data: data3,
       }])
     }
 
