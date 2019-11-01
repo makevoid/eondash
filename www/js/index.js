@@ -1,41 +1,40 @@
 "use strict"
 const JWT_TOKEN = window.JWT_TOKEN
 
-  const TICKINTERVAL = 1
-  const XAXISRANGE = 30
+const TICKINTERVAL = 1
+const XAXISRANGE = 30
 
-  let lastDate = 0
-  let data = []
+let lastDate = 0
+let data = []
 
-  const getDayWiseTimeSeries = (baseval, count, yrange) => {
-    let i = 0
-    while (i < count) {
-      let x = baseval
-      let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
-      data.push({
-        x, y
-      })
-      lastDate = baseval
-      baseval += TICKINTERVAL
-      i++
-    }
+const getDayWiseTimeSeries = (baseval, count, yrange) => {
+  let i = 0
+  while (i < count) {
+    let x = baseval
+    let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
+    data.push({
+      x, y
+    })
+    lastDate = baseval
+    baseval += TICKINTERVAL
+    i++
+  }
+}
+
+const getNewSeries = (baseval, yrange) => {
+  const newDate = baseval + TICKINTERVAL
+  lastDate = newDate
+
+  for(let i = 0; i< data.length - 30; i++) {
+    data[i].x = newDate - XAXISRANGE - TICKINTERVAL
+    data[i].y = 0
   }
 
-  const getNewSeries = (baseval, yrange) => {
-    const newDate = baseval + TICKINTERVAL
-    lastDate = newDate
-
-    for(let i = 0; i< data.length - 30; i++) {
-      data[i].x = newDate - XAXISRANGE - TICKINTERVAL
-      data[i].y = 0
-    }
-
-    return {
-      x: newDate,
-      y: Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min,
-    }
+  return {
+    x: newDate,
+    y: Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min,
   }
-
+}
 
 const resetData = _ => {
   const len = data.length
@@ -62,67 +61,65 @@ const chartOptions = {
   },
 }
 
-  const options = {
-    chart: chartOptions,
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      curve: 'smooth',
-    },
-    markers: {
-      size: 0,
-    },
-    xaxis: {
-      type: 'number',
-      range: XAXISRANGE,
-    },
-    yaxis: {
-      max: 100,
-    },
-    legend: {
-      show: false,
-    },
+const options = {
+  chart: chartOptions,
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    curve: 'smooth',
+  },
+  markers: {
+    size: 0,
+  },
+  xaxis: {
+    type: 'number',
+    range: XAXISRANGE,
+  },
+  yaxis: {
+    max: 100,
+  },
+  legend: {
+    show: false,
+  },
+}
+
+const request = (url, options) => (
+  new Promise((resolve, reject) => {
+    cordova.plugin.http.sendRequest(url, options, (resp) => {
+      // console.log(resp.data)
+      resolve(resp.data)
+    }, (resp) => {
+      console.log("ERROR:", resp.status)
+      console.log(resp.error)
+      reject(resp.error)
+    });
+  })
+)
+
+const getDongles = async () => {
+  const options = { method: 'get' }
+  const url = "https://api.commadotai.com/v1/me/devices"
+  const data = await request(url, options)
+  console.log("getDongles", data)
+  return data
+}
+
+// get carState etc. from Athena
+const getData = async (dongleId) => {
+  const service = "carState"
+  const params = {
+    method: "getMessage",
+    params: {"service": service, "timeout": 3000},
+    jsonrpc: "2.0",
+    id: 0
   }
-
-
-  const request = (url, options) => (
-    new Promise((resolve, reject) => {
-      cordova.plugin.http.sendRequest(url, options, (resp) => {
-        // console.log(resp.data)
-        resolve(resp.data)
-      }, (resp) => {
-        console.log("ERROR:", resp.status)
-        console.log(resp.error)
-        reject(resp.error)
-      });
-    })
-  )
-
-  const getDongles = async () => {
-    const options = { method: 'get' }
-    const url = "https://api.commadotai.com/v1/me/devices"
-    const data = await request(url, options)
-    console.log("getDongles", data)
-    return data
-  }
-
-  // get carState etc. from Athena
-  const getData = async (dongleId) => {
-    const service = "carState"
-    const params = {
-      method: "getMessage",
-      params: {"service": service, "timeout": 3000},
-      jsonrpc: "2.0",
-      id: 0
-    }
-    const options = { method: 'post', data: params }
-    const url = `https://athena.comma.ai/${dongleId}`
-    const data = await request(url, options)
-    console.log("getData", data)
-    return data
-  }
-
+  const options = { method: 'post', data: params }
+  const url = `https://athena.comma.ai/${dongleId}`
+  const data = await request(url, options)
+  console.log("getData", data)
+  return data
+}
 
 const testRequest = async () => {
   cordova.plugin.http.setHeader('Authorization', `JWT ${JWT_TOKEN}`)
