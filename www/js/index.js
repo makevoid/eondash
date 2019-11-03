@@ -1,29 +1,34 @@
 "use strict"
+
 const JWT_TOKEN = window.JWT_TOKEN
+const setIntervalAsync = SetIntervalAsync.dynamic.setIntervalAsync
+
+class NullDongleId { }
 
 const TICKINTERVAL = 1
 const XAXISRANGE = 30
 
-let lastDate = 0
+let timer = new Date()
 let data = []
 
-const getDayWiseTimeSeries = (baseval, count, yrange) => {
-  let i = 0
-  while (i < count) {
-    let x = baseval
-    let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
-    data.push({
-      x, y
-    })
-    lastDate = baseval
-    baseval += TICKINTERVAL
-    i++
-  }
-}
+// let lastDateSeconds = 0
+// const getDayWiseTimeSeries = (baseval, count, yrange) => {
+//   let i = 0
+//   while (i < count) {
+//     let x = baseval
+//     let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
+//     data.push({
+//       x, y
+//     })
+//     lastDateSeconds = baseval
+//     baseval += TICKINTERVAL
+//     i++
+//   }
+// }
 
 const getNewSeries = (baseval, yrange) => {
   const newDate = baseval + TICKINTERVAL
-  lastDate = newDate
+  lastDateSeconds = newDate
 
   for(let i = 0; i< data.length - 30; i++) {
     data[i].x = newDate - XAXISRANGE - TICKINTERVAL
@@ -77,7 +82,7 @@ const options = {
     range: XAXISRANGE,
   },
   yaxis: {
-    max: 100,
+    // max: 100,
   },
   legend: {
     show: false,
@@ -90,7 +95,7 @@ const request = (url, options) => (
       // console.log(resp.data)
       resolve(resp.data)
     }, (resp) => {
-      console.log("ERROR:", resp.status)
+      console.log("ERROR fetching URL: ", url, " -> ", resp.status)
       console.log(resp.error)
       reject(resp.error)
     });
@@ -100,40 +105,45 @@ const request = (url, options) => (
 const getDongles = async () => {
   const options = { method: 'get' }
   const url = "https://api.commadotai.com/v1/me/devices"
-  const data = await request(url, options)
+  let data = await request(url, options)
+  data = JSON.parse(data)
   console.log("getDongles", data)
   return data
 }
 
 // get carState etc. from Athena
 const getData = async (dongleId) => {
-  const service = "carState"
+  // const service = "carState"
+  const service = "thermal"
   const params = {
     method: "getMessage",
-    params: {"service": service, "timeout": 3000},
+    params: { service: service, timeout: 3000 },
     jsonrpc: "2.0",
-    id: 0
+    id: 0,
   }
   const options = { method: 'post', data: params }
   const url = `https://athena.comma.ai/${dongleId}`
-  const data = await request(url, options)
-  console.log("getData", data)
+  let data = await request(url, options)
+  data = JSON.parse(data)
+  data = data.result
   return data
 }
 
-const testRequest = async () => {
-  cordova.plugin.http.setHeader('Authorization', `JWT ${JWT_TOKEN}`)
+// const testRequest = async () => {
+//
+//   const log = document.querySelector(".debug")
+//   log.innerHTML = "init"
+//
+//   const dongles  = await getDongles()
+//   dongleId = dongles[0].dongle_id
+//
+//   const data = await getData(dongleId)
+//
+//   log.innerHTML = data
+// }
 
-  const log = document.querySelector(".debug")
-  log.innerHTML = "init"
 
-  const dongles  = await getDongles()
-  const dongleId = dongles[0].dongle_id
-
-  const data = await getData(dongleId)
-
-  log.innerHTML = data
-}
+let dongleId = new NullDongleId()
 
 // default cordova setup
 const app = {
@@ -145,7 +155,14 @@ const app = {
     this.receivedEvent('deviceready')
   },
 
+  initHttp: () => {
+    cordova.plugin.http.setHeader('Authorization', `JWT ${JWT_TOKEN}`)
+    cordova.plugin.http.setDataSerializer('json')
+  },
+
   receivedEvent: async function(id) {
+    this.initHttp()
+
     const parentElement     = document.getElementById(id)
     const listeningElement  = parentElement.querySelector('.listening')
     const receivedElement   = parentElement.querySelector('.received')
@@ -157,10 +174,10 @@ const app = {
 
     // -------
 
-    getDayWiseTimeSeries(1, 30, {
-      min: 10,
-      max: 90,
-    })
+    // getDayWiseTimeSeries(1, 30, {
+    //   min: 10,
+    //   max: 90,
+    // })
 
     const clone = (obj) => ( { ...obj }) // Object.assign({}, obj)
     const cloneArr = (arr) => new Array(...arr)
@@ -213,19 +230,22 @@ const app = {
     )
     chart3.render()
 
-    const updateCharts = () => {
-      const newSeries1 = getNewSeries(lastDate, {
-        min: 10,
-        max: 90,
-      })
-      const newSeries2 = getNewSeries(lastDate, {
-        min: 10,
-        max: 90,
-      })
-      const newSeries3 = getNewSeries(lastDate, {
-        min: 10,
-        max: 90,
-      })
+    const updateCharts = async () => {
+      let data = await getData(dongleId)
+      data = data.thermal
+      data.batteryVoltage = Math.round( data.batteryVoltage / 1000 / 10 ) / 100
+      // console.log("data:", data)
+      console.log("cpu0:", data.cpu0)
+      console.log("batteryCurrent:", data.batteryCurrent)
+      console.log("batteryVoltage:", data.batteryVoltage)
+
+      const now = new Date()
+      const seconds = Math.round((now - timer) / 100) / 10
+      // console.log("S", seconds)
+
+      const newSeries1 = { y: data.cpu0,           x: seconds }
+      const newSeries2 = { y: data.batteryCurrent, x: seconds }
+      const newSeries3 = { y: data.batteryVoltage, x: seconds }
 
       if (data1.length > 30) {
         data1.unshift()
@@ -246,9 +266,13 @@ const app = {
       }])
     }
 
-    setInterval(updateCharts, 1000)
+    const dongles  = await getDongles()
+    dongleId = dongles[0].dongle_id
 
-    await testRequest()
+    await updateCharts()
+    setIntervalAsync(updateCharts, 3000)
+
+    // await testRequest()
   }
 }
 
