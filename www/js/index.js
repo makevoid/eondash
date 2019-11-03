@@ -1,5 +1,7 @@
 "use strict"
 
+// note: consider if it's worth adding a loading screen as the chart are not renedered after the second tick (1-6 seconds, depending on your connection and the connection to the comma api servers)
+
 const JWT_TOKEN = window.JWT_TOKEN
 const setIntervalAsync = SetIntervalAsync.dynamic.setIntervalAsync
 
@@ -10,21 +12,6 @@ const XAXISRANGE = 30
 
 let timer = new Date()
 let data = []
-
-// let lastDateSeconds = 0
-// const getDayWiseTimeSeries = (baseval, count, yrange) => {
-//   let i = 0
-//   while (i < count) {
-//     let x = baseval
-//     let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min
-//     data.push({
-//       x, y
-//     })
-//     lastDateSeconds = baseval
-//     baseval += TICKINTERVAL
-//     i++
-//   }
-// }
 
 const getNewSeries = (baseval, yrange) => {
   const newDate = baseval + TICKINTERVAL
@@ -82,6 +69,7 @@ const options = {
     range: XAXISRANGE,
   },
   yaxis: {
+    // TODO: consider if it's needed to limit to a max Y value as in the default example
     // max: 100,
   },
   legend: {
@@ -113,6 +101,7 @@ const getDongles = async () => {
 
 // get carState etc. from Athena
 const getData = async (dongleId) => {
+  // TODO: in the next commit i'll switch thermal to carState output
   // const service = "carState"
   const service = "thermal"
   const params = {
@@ -128,20 +117,6 @@ const getData = async (dongleId) => {
   data = data.result
   return data
 }
-
-// const testRequest = async () => {
-//
-//   const log = document.querySelector(".debug")
-//   log.innerHTML = "init"
-//
-//   const dongles  = await getDongles()
-//   dongleId = dongles[0].dongle_id
-//
-//   const data = await getData(dongleId)
-//
-//   log.innerHTML = data
-// }
-
 
 let dongleId = new NullDongleId()
 
@@ -169,15 +144,8 @@ const app = {
 
     listeningElement.setAttribute('style', 'display:none')
     receivedElement.setAttribute('style', 'display:block')
-
     console.log(`Received Event: ${id}`)
 
-    // -------
-
-    // getDayWiseTimeSeries(1, 30, {
-    //   min: 10,
-    //   max: 90,
-    // })
 
     const clone = (obj) => ( { ...obj }) // Object.assign({}, obj)
     const cloneArr = (arr) => new Array(...arr)
@@ -271,8 +239,6 @@ const app = {
 
     await updateCharts()
     setIntervalAsync(updateCharts, 3000)
-
-    // await testRequest()
   }
 }
 
