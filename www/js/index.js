@@ -200,6 +200,8 @@ const app = {
 
     const updateCharts = async () => {
       let data = await getData(dongleId)
+
+      // use thermal instead of carstate as example
       data = data.thermal
       data.batteryVoltage = Math.round( data.batteryVoltage / 1000 / 10 ) / 100
       // console.log("data:", data)
