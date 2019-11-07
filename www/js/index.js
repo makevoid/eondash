@@ -2,7 +2,7 @@
 
 // note: consider if it's worth adding a loading screen as the chart are not renedered after the second tick (1-6 seconds, depending on your connection and the connection to the comma api servers)
 
-const JWT_TOKEN = window.JWT_TOKEN
+const JWT_TOKEN_DEFAULT = window.JWT_TOKEN
 const setIntervalAsync = SetIntervalAsync.dynamic.setIntervalAsync
 
 class NullDongleId { }
@@ -12,6 +12,35 @@ const XAXISRANGE = 30
 
 let timer = new Date()
 let data = []
+
+let JWT_TOKEN = JWT_TOKEN_DEFAULT
+
+// const jwtFresh = true
+const jwtFresh = false
+
+const modalElem = document.querySelector(".modal")
+const jwtForm = document.querySelector(".jwt_auth_form")
+const jwtInput = document.querySelector(".jwt_token_input")
+
+const submitJwtForm = (evt) => {
+  evt.preventDefault()
+  JWT_TOKEN = jwtInput.value
+  console.log("got JWT from user input:", JWT_TOKEN)
+  modalElem.style.display = "none"
+  app.initApp()
+}
+
+if (jwtFresh) {
+  modalElem.style.display = "none"
+} else {
+  jwtForm.addEventListener("submit", submitJwtForm)
+}
+
+// else {
+//   modal.style.display = "block"
+// }
+
+
 
 const getNewSeries = (baseval, yrange) => {
   const newDate = baseval + TICKINTERVAL
@@ -135,17 +164,55 @@ const app = {
     cordova.plugin.http.setDataSerializer('json')
   },
 
-  receivedEvent: async function(id) {
-    this.initHttp()
+  updateCharts: async () => {
+    let data = await getData(dongleId)
 
-    const parentElement     = document.getElementById(id)
-    const listeningElement  = parentElement.querySelector('.listening')
-    const receivedElement   = parentElement.querySelector('.received')
+    const now = new Date()
+    const seconds = Math.round((now - timer) / 100) / 10
 
-    listeningElement.setAttribute('style', 'display:none')
-    receivedElement.setAttribute('style', 'display:block')
-    console.log(`Received Event: ${id}`)
+    // // use thermal instead of carstate as example
+    // data = data.thermal
+    // data.batteryVoltage = Math.round( data.batteryVoltage / 1000 / 10 ) / 100
+    // // console.log("data:", data)
+    // console.log("cpu0:", data.cpu0)
+    // console.log("batteryCurrent:", data.batteryCurrent)
+    // console.log("batteryVoltage:", data.batteryVoltage)
+    // const newSeries1 = { y: data.cpu0,           x: seconds }
+    // const newSeries2 = { y: data.batteryCurrent, x: seconds }
+    // const newSeries3 = { y: data.batteryVoltage, x: seconds }
 
+    data = data.carState
+
+    const newSeries1 = { y: data.steeringAngle,   x: seconds }
+    const newSeries2 = { y: data.steeringTorque,  x: seconds }
+    const newSeries3 = { y: data.vEgo,            x: seconds }
+
+    // aEgo // acceleration
+
+    if (data1.length > 30) {
+      data1.unshift()
+      data2.unshift()
+      data3.unshift()
+    }
+    data1.push(newSeries1)
+    data2.push(newSeries2)
+    data3.push(newSeries3)
+    chart1.updateSeries([{
+      data: data1,
+    }])
+    chart2.updateSeries([{
+      data: data2,
+    }])
+    chart3.updateSeries([{
+      data: data3,
+    }])
+  },
+
+  initApp: async () => {
+    cordova.plugin.http.setHeader('Authorization', `JWT ${JWT_TOKEN}`)
+    cordova.plugin.http.setDataSerializer('json')
+
+    app.initHttp()
 
     const clone = (obj) => ( { ...obj }) // Object.assign({}, obj)
     const cloneArr = (arr) => new Array(...arr)
@@ -198,55 +265,24 @@ const app = {
     )
     chart3.render()
 
-    const updateCharts = async () => {
-      let data = await getData(dongleId)
-
-      const now = new Date()
-      const seconds = Math.round((now - timer) / 100) / 10
-
-      // // use thermal instead of carstate as example
-      // data = data.thermal
-      // data.batteryVoltage = Math.round( data.batteryVoltage / 1000 / 10 ) / 100
-      // // console.log("data:", data)
-      // console.log("cpu0:", data.cpu0)
-      // console.log("batteryCurrent:", data.batteryCurrent)
-      // console.log("batteryVoltage:", data.batteryVoltage)
-      // const newSeries1 = { y: data.cpu0,           x: seconds }
-      // const newSeries2 = { y: data.batteryCurrent, x: seconds }
-      // const newSeries3 = { y: data.batteryVoltage, x: seconds }
-
-      data = data.carState
-
-      const newSeries1 = { y: data.steeringAngle,   x: seconds }
-      const newSeries2 = { y: data.steeringTorque,  x: seconds }
-      const newSeries3 = { y: data.vEgo,            x: seconds }
-
-      // aEgo // acceleration
-
-      if (data1.length > 30) {
-        data1.unshift()
-        data2.unshift()
-        data3.unshift()
-      }
-      data1.push(newSeries1)
-      data2.push(newSeries2)
-      data3.push(newSeries3)
-      chart1.updateSeries([{
-        data: data1,
-      }])
-      chart2.updateSeries([{
-        data: data2,
-      }])
-      chart3.updateSeries([{
-        data: data3,
-      }])
-    }
-
     const dongles  = await getDongles()
     dongleId = dongles[0].dongle_id
 
-    await updateCharts()
-    setIntervalAsync(updateCharts, 3000)
+    await app.updateCharts()
+    setIntervalAsync(app.updateCharts, 3000)
+  },
+
+  // application initialization
+  receivedEvent: async function(id) {
+    const parentElement     = document.getElementById(id)
+    const listeningElement  = parentElement.querySelector('.listening')
+    const receivedElement   = parentElement.querySelector('.received')
+
+    listeningElement.setAttribute('style', 'display:none')
+    receivedElement.setAttribute('style', 'display:block')
+    console.log(`Received Event: ${id}`)
+
+    if (jwtFresh) app.initApp()
   }
 }
 
