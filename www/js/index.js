@@ -102,8 +102,8 @@ const getDongles = async () => {
 // get carState etc. from Athena
 const getData = async (dongleId) => {
   // TODO: in the next commit i'll switch thermal to carState output
-  // const service = "carState"
-  const service = "thermal"
+  const service = "carState"
+  // const service = "thermal"
   const params = {
     method: "getMessage",
     params: { service: service, timeout: 3000 },
@@ -201,21 +201,27 @@ const app = {
     const updateCharts = async () => {
       let data = await getData(dongleId)
 
-      // use thermal instead of carstate as example
-      data = data.thermal
-      data.batteryVoltage = Math.round( data.batteryVoltage / 1000 / 10 ) / 100
-      // console.log("data:", data)
-      console.log("cpu0:", data.cpu0)
-      console.log("batteryCurrent:", data.batteryCurrent)
-      console.log("batteryVoltage:", data.batteryVoltage)
-
       const now = new Date()
       const seconds = Math.round((now - timer) / 100) / 10
-      // console.log("S", seconds)
 
-      const newSeries1 = { y: data.cpu0,           x: seconds }
-      const newSeries2 = { y: data.batteryCurrent, x: seconds }
-      const newSeries3 = { y: data.batteryVoltage, x: seconds }
+      // // use thermal instead of carstate as example
+      // data = data.thermal
+      // data.batteryVoltage = Math.round( data.batteryVoltage / 1000 / 10 ) / 100
+      // // console.log("data:", data)
+      // console.log("cpu0:", data.cpu0)
+      // console.log("batteryCurrent:", data.batteryCurrent)
+      // console.log("batteryVoltage:", data.batteryVoltage)
+      // const newSeries1 = { y: data.cpu0,           x: seconds }
+      // const newSeries2 = { y: data.batteryCurrent, x: seconds }
+      // const newSeries3 = { y: data.batteryVoltage, x: seconds }
+
+      data = data.carState
+
+      const newSeries1 = { y: data.steeringAngle,   x: seconds }
+      const newSeries2 = { y: data.steeringTorque,  x: seconds }
+      const newSeries3 = { y: data.vEgo,            x: seconds }
+
+      // aEgo // acceleration
 
       if (data1.length > 30) {
         data1.unshift()
